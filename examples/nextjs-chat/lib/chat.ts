@@ -5,10 +5,10 @@
  * Notifies connected clients via Server-Sent Events.
  */
 
-import { SessionManager } from 'pi-mono-mini/chat/index.js';
-import { Agent, getLLMConfigFromEnv } from 'pi-mono-mini/core/index.js';
-import { ProactiveAgent } from 'pi-mono-mini/proactive/index.js';
-import type { PendingTask } from 'pi-mono-mini/proactive/watcher.js';
+import { SessionManager } from 'pi-mono-mini/chat/index';
+import { Agent, getLLMConfigFromEnv } from 'pi-mono-mini/core/index';
+import { ProactiveAgent } from 'pi-mono-mini/proactive/index';
+import type { PendingTask } from 'pi-mono-mini/proactive/watcher';
 
 // Singleton instances
 let manager: SessionManager | null = null;
