@@ -71,6 +71,7 @@ class SmartAssistant {
   private proactive: ProactiveAgent;
   private rl: readline.Interface;
   private proactiveMessages: string[] = [];
+  private messages: Array<{ role: 'user' | 'assistant'; content: string; timestamp: number }> = [];
 
   constructor() {
     const llmConfig = getLLMConfigFromEnv();
@@ -153,6 +154,13 @@ Be concise and friendly.`,
         try {
           console.log('🤖 Thinking...');
           const response = await this.agent.run(trimmed);
+          
+          // Record to history
+          this.messages.push(
+            { role: 'user', content: trimmed, timestamp: Date.now() },
+            { role: 'assistant', content: response, timestamp: Date.now() }
+          );
+          
           console.log(`🤖 ${response}\n`);
         } catch (error: any) {
           console.error(`❌ Error: ${error.message}\n`);
@@ -176,6 +184,8 @@ Be concise and friendly.`,
       case '/help':
         console.log(`\n📖 Commands:`);
         console.log(`  /tasks    - List scheduled tasks`);
+        console.log(`  /history  - Show conversation history`);
+        console.log(`  /export   - Export conversation (markdown)`);
         console.log(`  /clear    - Clear agent memory`);
         console.log(`  /quit     - Exit\n`);
         break;
@@ -194,8 +204,36 @@ Be concise and friendly.`,
         }
         break;
       
+      case '/history':
+        if (this.messages.length === 0) {
+          console.log('\n📭 No messages yet\n');
+        } else {
+          console.log('\n📜 Conversation History:');
+          console.log('-----------------------');
+          this.messages.forEach((m, i) => {
+            const role = m.role === 'user' ? '👤' : '🤖';
+            const preview = m.content.slice(0, 50).replace(/\n/g, ' ');
+            console.log(`  ${i + 1}. ${role} ${preview}${m.content.length > 50 ? '...' : ''}`);
+          });
+          console.log(`\n  Total: ${this.messages.length / 2} exchanges\n`);
+        }
+        break;
+      
+      case '/export':
+        if (this.messages.length === 0) {
+          console.log('\n📭 Nothing to export\n');
+        } else {
+          const md = this.messages.map(m => {
+            const header = m.role === 'user' ? '## 👤 User' : '## 🤖 Assistant';
+            return `${header}\n\n${m.content}\n`;
+          }).join('\n---\n\n');
+          console.log('\n' + md + '\n');
+        }
+        break;
+      
       case '/clear':
         this.agent.clear();
+        this.messages = [];
         console.log('\n🗑️  Memory cleared\n');
         break;
       
