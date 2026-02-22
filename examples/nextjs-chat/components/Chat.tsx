@@ -28,6 +28,8 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [delaySeconds, setDelaySeconds] = useState(10);
   const [reminderText, setReminderText] = useState('');
@@ -55,23 +57,40 @@ export default function Chat() {
 
   async function init() {
     try {
+      setError(null);
+      
       // Create or get session
-      const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ action: 'create', title: 'Chat' }) });
+      const res = await fetch('/api/chat', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', title: 'Chat' }) 
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
       setSessionId(data.sessionId);
       
       // Load messages
       const msgRes = await fetch(`/api/chat?sessionId=${data.sessionId}`);
+      if (!msgRes.ok) throw new Error('Failed to load messages');
+      
       const msgData = await msgRes.json();
       setMessages(msgData.messages || []);
       
       // Load tasks
-      loadTasks();
+      await loadTasks();
       
       // Connect to SSE
       connectEventSource();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to init:', e);
+      setError(e.message || 'Failed to initialize');
+    } finally {
+      setInitializing(false);
     }
   }
 
@@ -185,6 +204,42 @@ export default function Chat() {
   async function enableNotifications() {
     const granted = await requestNotificationPermission();
     setNotifPermission(granted ? 'granted' : 'denied');
+  }
+
+  if (initializing) {
+    return (
+      <div className="chat-container" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h2>🚀 Loading...</h2>
+          <p>Initializing chat session</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chat-container" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#e74c3c' }}>
+          <h2>❌ Error</h2>
+          <p>{error}</p>
+          <button 
+            onClick={() => { setInitializing(true); init(); }}
+            style={{ 
+              marginTop: '20px', 
+              padding: '10px 20px',
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

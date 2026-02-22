@@ -19,68 +19,90 @@ let proactive: ProactiveAgent | null = null;
 const clients = new Set<(data: any) => void>();
 
 export async function initChatManager() {
-  if (manager) return { manager, proactive, globalAgent };
-
-  // Get LLM config
-  const llmConfig = getLLMConfigFromEnv();
-
-  // Create a shared agent for proactive tasks
-  // In production, you might want per-user agents
-  globalAgent = new Agent({
-    systemPrompt: 'You are a helpful assistant.',
-    llm: llmConfig,
-    maxIterations: 10,
-  }, []);
-
-  // Initialize SessionManager
-  manager = new SessionManager({
-    dataDir: '.pi/nextjs-chat',
-    defaultSystemPrompt: 'You are a helpful assistant.',
-  });
-  await manager.init();
-
-  // Create default session if none exists
-  const sessions = manager.listSessions().filter(s => s.status !== 'closed');
-  if (sessions.length === 0) {
-    const sessionId = await manager.createSession({ title: 'Default' });
-    manager.activateSession(sessionId);
+  console.log('[ChatManager] Initializing...');
+  
+  if (manager) {
+    console.log('[ChatManager] Already initialized');
+    return { manager, proactive, globalAgent };
   }
 
-  // Initialize ProactiveAgent with the shared agent
-  proactive = new ProactiveAgent(globalAgent, {
-    dataDir: '.pi/nextjs-chat/proactive',
-    autoStart: true,
-  });
-  await proactive.init();
+  try {
+    // Get LLM config
+    const llmConfig = getLLMConfigFromEnv();
+    console.log('[ChatManager] LLM Config loaded:', llmConfig.model);
 
-  // Hook into proactive to broadcast notifications
-  proactive.watcher.on('processed', (task: PendingTask) => {
-    broadcast({
-      type: 'proactive',
-      task: {
-        name: task.taskName,
-        prompt: task.prompt,
-        timestamp: Date.now(),
-      },
+    // Create a shared agent for proactive tasks
+    globalAgent = new Agent({
+      systemPrompt: 'You are a helpful assistant.',
+      llm: llmConfig,
+      maxIterations: 10,
+    }, []);
+    console.log('[ChatManager] Global agent created');
+
+    // Initialize SessionManager
+    manager = new SessionManager({
+      dataDir: '.pi/nextjs-chat',
+      defaultSystemPrompt: 'You are a helpful assistant.',
     });
-  });
+    await manager.init();
+    console.log('[ChatManager] SessionManager initialized');
 
-  // Hook into chat events
-  manager.on('message:sent', ({ sessionId, message }) => {
-    broadcast({
-      type: 'message',
-      sessionId,
-      message,
+    // Create default session if none exists
+    const sessions = manager.listSessions().filter(s => s.status !== 'closed');
+    if (sessions.length === 0) {
+      const sessionId = await manager.createSession({ title: 'Default' });
+      manager.activateSession(sessionId);
+      console.log('[ChatManager] Default session created:', sessionId);
+    } else {
+      console.log('[ChatManager] Found existing sessions:', sessions.length);
+    }
+
+    // Initialize ProactiveAgent with the shared agent
+    proactive = new ProactiveAgent(globalAgent, {
+      dataDir: '.pi/nextjs-chat/proactive',
+      autoStart: true,
     });
-  });
+    await proactive.init();
+    console.log('[ChatManager] ProactiveAgent initialized');
 
-  return { manager, proactive, globalAgent };
+    // Hook into proactive to broadcast notifications
+    proactive.watcher.on('processed', (task: PendingTask) => {
+      console.log('[ChatManager] Proactive task triggered:', task.taskName);
+      broadcast({
+        type: 'proactive',
+        task: {
+          name: task.taskName,
+          prompt: task.prompt,
+          timestamp: Date.now(),
+        },
+      });
+    });
+
+    // Hook into chat events
+    manager.on('message:sent', ({ sessionId, message }) => {
+      broadcast({
+        type: 'message',
+        sessionId,
+        message,
+      });
+    });
+
+    console.log('[ChatManager] Fully initialized');
+    return { manager, proactive, globalAgent };
+  } catch (e) {
+    console.error('[ChatManager] Initialization failed:', e);
+    throw e;
+  }
 }
 
 // Server-Sent Events helpers
 export function addClient(send: (data: any) => void) {
   clients.add(send);
-  return () => clients.delete(send);
+  console.log('[ChatManager] Client connected, total:', clients.size);
+  return () => {
+    clients.delete(send);
+    console.log('[ChatManager] Client disconnected, total:', clients.size);
+  };
 }
 
 function broadcast(data: any) {
