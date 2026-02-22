@@ -61,6 +61,11 @@ export interface ChatEvents {
   'message:sent': { sessionId: string; message: ChatMessage };
   'message:streaming': { sessionId: string; chunk: string };
   
+  // Stream events (for streaming responses)
+  'stream:start': { sessionId: string };
+  'stream:chunk': { sessionId: string; chunk: string };
+  'stream:end': { sessionId: string };
+  
   // State changes
   'state:changed': { sessionId: string; prev: SessionState; current: SessionState };
   'error': { sessionId: string; error: Error };

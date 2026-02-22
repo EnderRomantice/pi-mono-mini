@@ -12,8 +12,10 @@
     "proactive": "tsx src/demo-proactive.ts",
     "example:chat": "tsx examples/chat-cli/index.ts",
     "example:assistant": "tsx examples/assistant/index.ts",
-    "example:nextjs": "cd examples/nextjs-chat && npm install && npm run dev",
+    "example:nestjs": "cd examples/nestjs-react/backend && npm install && npm run dev",
+    "example:nestjs:frontend": "cd examples/nestjs-react/frontend && npm install && npm run dev",
     "build": "tsc",
+    "build:watch": "tsc --watch",
     "dev": "tsx --watch src/main.ts"
   },
   "keywords": [],

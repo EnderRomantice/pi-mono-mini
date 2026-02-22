@@ -145,13 +145,14 @@ await manager.sendMessage(sessionId, 'Hello!');
 ### Using Core Agent Directly
 
 ```typescript
-import { Agent, getLLMConfigFromEnv } from './core/index.js';
+import { Agent, createDefaultCoreTools, getLLMConfigFromEnv } from './core/index.js';
 
 const llmConfig = getLLMConfigFromEnv();
+const tools = createDefaultCoreTools();
 const agent = new Agent({
   systemPrompt: 'You are a helpful assistant.',
   llm: llmConfig,
-}, []);
+}, tools);
 
 const response = await agent.run('Hello!');
 console.log(response);
@@ -255,7 +256,7 @@ Proactive task data is stored by default in the `.pi/proactive/` directory:
 - [x] Phase 2: Chat Interface (Interactive CLI)
 - [x] Phase 3: Proactive Agent (Scheduled tasks)
 - [ ] Phase 4: Streaming responses
-- [ ] Phase 5: Filesystem and bash tools
+- [x] Phase 5: Filesystem and bash tools
 
 ## Examples
 

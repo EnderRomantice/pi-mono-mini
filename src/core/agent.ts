@@ -210,6 +210,18 @@ Available tools:
 ${toolList || '(none)'}`;
   }
 
+  /**
+   * Register a new tool dynamically
+   */
+  registerTool(tool: Tool): void {
+    this.tools.set(tool.name, tool);
+    // Update system prompt with new tools
+    const systemPrompt = this.buildSystemPrompt();
+    if (this.messages.length > 0 && this.messages[0]?.role === 'system') {
+      this.messages[0]!.content = systemPrompt;
+    }
+  }
+
   // Getters for external access
   get state() {
     return {

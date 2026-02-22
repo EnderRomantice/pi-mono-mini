@@ -13,6 +13,7 @@ import { existsSync } from 'fs';
 import type {
   SessionState,
   SessionStatus,
+  SessionMetadata,
   ChatMessage,
   ChatEvents,
   ChatEventName,
@@ -22,6 +23,7 @@ import type {
   ChatAdapter,
 } from './types.js';
 import { Agent, getLLMConfigFromEnv } from '../core/index.js';
+import { complete } from '../core/llm.js';
 import type { Tool } from '../core/types.js';
 
 export class SessionManager extends EventEmitter {
@@ -78,7 +80,7 @@ export class SessionManager extends EventEmitter {
       status: 'idle',
       messages: [],
       metadata: {
-        title: options.title || `Session ${this.sessions.size + 1}`,
+        title: options.title || `New Session #${sessionId.slice(0, 8)}`,
         systemPrompt: options.systemPrompt || this.config.defaultSystemPrompt,
         ...options.metadata,
       },
@@ -184,24 +186,36 @@ export class SessionManager extends EventEmitter {
     this.emit('message:received', { sessionId, message: userMessage });
     this.adapter?.displayMessage(userMessage);
 
-    // Get response from agent
-    const response = await agent.run(content);
+    // Emit stream start event
+    this.emit('stream:start', { sessionId });
 
-    // Create assistant message
-    const assistantMessage: ChatMessage = {
-      id: randomUUID(),
-      role: 'assistant',
-      content: response,
-      timestamp: Date.now(),
-    };
+    try {
+      // Get response from agent
+      const response = await agent.run(content);
 
-    session.messages.push(assistantMessage);
-    this.updateSession(sessionId);
-    
-    this.emit('message:sent', { sessionId, message: assistantMessage });
-    this.adapter?.displayMessage(assistantMessage);
+      // Create assistant message
+      const assistantMessage: ChatMessage = {
+        id: randomUUID(),
+        role: 'assistant',
+        content: response,
+        timestamp: Date.now(),
+      };
 
-    return assistantMessage;
+      session.messages.push(assistantMessage);
+      this.updateSession(sessionId);
+      
+      this.emit('message:sent', { sessionId, message: assistantMessage });
+      this.adapter?.displayMessage(assistantMessage);
+
+      return assistantMessage;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.emit('error', { sessionId, error: err });
+      throw err;
+    } finally {
+      // Emit stream end even when generation fails
+      this.emit('stream:end', { sessionId });
+    }
   }
 
   /**
@@ -300,6 +314,73 @@ export class SessionManager extends EventEmitter {
   }
 
   // ========================================================================
+  // Session Metadata Updates
+  // ========================================================================
+
+  /**
+   * Update session metadata (title, etc.)
+   */
+  async updateSessionMetadata(sessionId: string, metadata: Partial<SessionMetadata>): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const prev = {
+      ...session,
+      metadata: { ...session.metadata },
+      messages: [...session.messages],
+    };
+    session.metadata = { ...session.metadata, ...metadata };
+    session.updatedAt = Date.now();
+    
+    await this.persistSession(sessionId);
+    this.emit('state:changed', { sessionId, prev, current: session });
+  }
+
+  /**
+   * Generate a title for the session using a standalone LLM call
+   * This does not use the session's agent to avoid polluting chat history
+   */
+  async generateTitle(sessionId: string): Promise<string> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    // If no messages yet, return default title
+    if (session.messages.length === 0) {
+      return `New Session #${sessionId.slice(0, 8)}`;
+    }
+
+    // Get first user message as context
+    const firstUserMessage = session.messages.find(m => m.role === 'user');
+    if (!firstUserMessage) {
+      return `New Session #${sessionId.slice(0, 8)}`;
+    }
+
+    try {
+      // Use standalone LLM call to avoid polluting agent history
+      const llmConfig = getLLMConfigFromEnv();
+      const response = await complete(
+        [
+          {
+            role: 'system',
+            content: 'You are a title generator. Generate a very short title (3-6 words max) summarizing the user message. Reply with just the title, no quotes or punctuation.',
+          },
+          {
+            role: 'user',
+            content: firstUserMessage.content,
+          },
+        ],
+        llmConfig,
+        undefined
+      );
+
+      const title = response.content.trim().replace(/["']/g, '').slice(0, 50);
+      return title || `New Session #${sessionId.slice(0, 8)}`;
+    } catch (e) {
+      return `New Session #${sessionId.slice(0, 8)}`;
+    }
+  }
+
+  // ========================================================================
   // Helpers
   // ========================================================================
 
@@ -334,3 +415,4 @@ export class SessionManager extends EventEmitter {
     return super.emit(event, payload);
   }
 }
+
