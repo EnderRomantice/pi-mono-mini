@@ -45,27 +45,33 @@ npm start
 
 ## Architecture
 
-```
-Phase 1: Core ✅
-  src/core/
-  ├── types.ts          # Core types
-  ├── llm.ts            # LLM client (OpenAI-compatible)
-  ├── agent.ts          # ReAct Agent
-  └── index.ts          # Core exports
+Layered architecture separating infrastructure from presentation:
 
-Phase 2: Chat Interface ✅
-  src/chat/
-  ├── cli.ts            # Interactive CLI
-  ├── session.ts        # Chat session management
-  └── index.ts          # Chat exports
-
-Phase 3: Proactive Agent ✅
-  src/proactive/
-  ├── index.ts          # ProactiveAgent wrapper
-  ├── scheduler.ts      # Task scheduler (cron/at)
-  ├── watcher.ts        # File watcher for pending tasks
-  └── types.ts          # Task types
 ```
+┌─────────────────────────────────────────────────────────────┐
+│  Presentation Layer (examples/)                              │
+│  ├── chat-cli/        # Terminal UI implementation           │
+│  └── assistant/       # Chat + Proactive combined demo       │
+├─────────────────────────────────────────────────────────────┤
+│  Infrastructure Layer (src/)                                 │
+│  ├── core/            # LLM, Agent, Tools                    │
+│  ├── chat/            # Session management, state, events    │
+│  └── proactive/       # Task scheduling, file watching       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Core (`src/core/`)
+- **types.ts** - Base types (Message, Tool, LLMResponse)
+- **llm.ts** - LLM client (OpenAI-compatible)
+- **agent.ts** - ReAct Agent implementation
+
+### Chat Infrastructure (`src/chat/`)
+- **types.ts** - Chat abstractions (SessionState, ChatAdapter, events)
+- **manager.ts** - Session lifecycle, persistence, multi-session support
+- **index.ts** - Public API
+
+UI implementations should use `SessionManager` and implement `ChatAdapter`.
+See `examples/chat-cli/` for a reference terminal UI implementation.
 
 ### ReAct Loop
 
@@ -92,20 +98,51 @@ User Input → LLM Reasoning → Tool Call? → Execute Tool → (Loop)
 
 ## Usage
 
-### Interactive Chat
+### Interactive Chat (CLI)
 
 ```bash
 npm start
+# or
+npm run chat
 ```
 
 Commands available in chat:
 - `/help` - Show available commands
-- `/clear` - Clear conversation history
+- `/sessions` - List all sessions
+- `/new [title]` - Create a new session
+- `/switch <id>` - Switch to a session
 - `/history` - Show conversation history
-- `/export` - Export conversation as markdown
+- `/clear` - Clear current session
 - `/quit` - Exit the chat
 
-### Using as a Library
+### Building Custom UI
+
+Use the chat infrastructure to build your own interface:
+
+```typescript
+import { SessionManager, type ChatAdapter } from './chat/index.js';
+
+// 1. Create manager (handles state, persistence)
+const manager = new SessionManager({ dataDir: '.pi/chat' });
+await manager.init();
+
+// 2. Implement your UI adapter
+const myAdapter: ChatAdapter = {
+  init(mgr) { /* setup your UI */ },
+  displayMessage(msg) { /* show message in UI */ },
+  displayNotification(type, msg) { /* show notification */ },
+  updateStatus(sessionId, status) { /* update UI state */ },
+  dispose() { /* cleanup */ },
+};
+
+// 3. Connect and use
+manager.setAdapter(myAdapter);
+const sessionId = await manager.createSession({ title: 'My Chat' });
+manager.activateSession(sessionId);
+await manager.sendMessage(sessionId, 'Hello!');
+```
+
+### Using Core Agent Directly
 
 ```typescript
 import { Agent, getLLMConfigFromEnv } from './core/index.js';
@@ -222,9 +259,22 @@ Proactive task data is stored by default in the `.pi/proactive/` directory:
 
 ## Examples
 
-### Smart Assistant (Chat + Proactive)
+### Chat CLI (`examples/chat-cli/`)
 
-A smart assistant that combines interactive chat with proactive reminders:
+Reference terminal UI implementation using the chat infrastructure:
+
+```bash
+npm run example:chat
+```
+
+**Features:**
+- Multi-session support (`/new`, `/switch`, `/sessions`)
+- Conversation history (`/history`)
+- Persistent sessions across restarts
+
+### Smart Assistant (`examples/assistant/`)
+
+Combines chat with proactive reminders:
 
 ```bash
 npm run example:assistant
@@ -232,10 +282,10 @@ npm run example:assistant
 
 **Features:**
 - Normal conversations
-- Set reminders from natural language: `remind me in 10 seconds to drink water`
+- Natural language reminders: `remind me in 10 seconds to drink water`
 - Proactive notifications when time is up
 
-See [`examples/assistant/`](examples/assistant/) for implementation details.
+Both examples demonstrate how to use the infrastructure layers to build complete applications.
 
 ## References
 

@@ -8,8 +8,9 @@
   },
   "scripts": {
     "start": "tsx src/main.ts",
-    "chat": "tsx src/main.ts",
+    "chat": "tsx examples/chat-cli/index.ts",
     "proactive": "tsx src/demo-proactive.ts",
+    "example:chat": "tsx examples/chat-cli/index.ts",
     "example:assistant": "tsx examples/assistant/index.ts",
     "build": "tsc",
     "dev": "tsx --watch src/main.ts"
