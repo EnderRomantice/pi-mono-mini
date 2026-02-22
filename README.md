@@ -285,6 +285,25 @@ npm run example:assistant
 - Natural language reminders: `remind me in 10 seconds to drink water`
 - Proactive notifications when time is up
 
+### Next.js Chat (`examples/nextjs-chat/`)
+
+Full-stack web chat with proactive browser notifications:
+
+```bash
+npm run example:nextjs
+```
+
+**Features:**
+- Modern web UI with React
+- Server-Sent Events for real-time updates
+- Schedule reminders that trigger browser notifications
+- Persistent sessions
+
+**Architecture:**
+- Backend: Next.js API Routes + `chat`/`proactive` packages
+- Frontend: React + SSE client
+- Notifications: Browser Notification API
+
 Both examples demonstrate how to use the infrastructure layers to build complete applications.
 
 ## References

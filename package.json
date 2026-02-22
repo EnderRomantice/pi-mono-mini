@@ -12,6 +12,7 @@
     "proactive": "tsx src/demo-proactive.ts",
     "example:chat": "tsx examples/chat-cli/index.ts",
     "example:assistant": "tsx examples/assistant/index.ts",
+    "example:nextjs": "cd examples/nextjs-chat && npm install && npm run dev",
     "build": "tsc",
     "dev": "tsx --watch src/main.ts"
   },
