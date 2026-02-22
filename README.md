@@ -220,6 +220,23 @@ Proactive task data is stored by default in the `.pi/proactive/` directory:
 - [ ] Phase 4: Streaming responses
 - [ ] Phase 5: Filesystem and bash tools
 
+## Examples
+
+### Smart Assistant (Chat + Proactive)
+
+A smart assistant that combines interactive chat with proactive reminders:
+
+```bash
+npm run example:assistant
+```
+
+**Features:**
+- Normal conversations
+- Set reminders from natural language: `remind me in 10 seconds to drink water`
+- Proactive notifications when time is up
+
+See [`examples/assistant/`](examples/assistant/) for implementation details.
+
 ## References
 
 - [Kimi Code API Docs](https://www.kimi.com/code/docs/more/third-party-agents.html)

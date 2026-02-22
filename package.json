@@ -10,6 +10,7 @@
     "start": "tsx src/main.ts",
     "chat": "tsx src/main.ts",
     "proactive": "tsx src/demo-proactive.ts",
+    "example:assistant": "tsx examples/assistant/index.ts",
     "build": "tsc",
     "dev": "tsx --watch src/main.ts"
   },
