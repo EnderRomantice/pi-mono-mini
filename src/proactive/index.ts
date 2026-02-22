@@ -1,9 +1,8 @@
 /**
  * Proactive Agent Extension
- * 为 Agent 添加主动能力，不修改核心代码
  */
 
-import { Agent } from '../agent.js';
+import { Agent } from '../core/agent.js';
 import { Scheduler } from './scheduler.js';
 import { PendingWatcher, type PendingTask } from './watcher.js';
 import type { Task } from './types.js';

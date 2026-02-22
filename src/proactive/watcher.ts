@@ -1,6 +1,5 @@
 /**
  * File Watcher for Proactive Agent
- * 监控 pending 目录，将任务转化为 Agent 的 steer() 消息
  */
 
 import { watch, type FSWatcher } from 'fs';

@@ -1,6 +1,5 @@
 /**
  * Task Scheduler for Proactive Agent
- * 管理定时任务，支持 cron 和一次性任务
  */
 
 import type { Task, TaskType, TaskResult } from './types.js';

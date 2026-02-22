@@ -1,6 +1,5 @@
 /**
  * Proactive Agent Types
- * 任务调度系统类型定义
  */
 
 export type TaskType = 'scheduled' | 'recurring' | 'event';

@@ -207,9 +207,7 @@ export class Agent {
     return `${this.config.systemPrompt}
 
 Available tools:
-${toolList || '(none)'}
-
-You may receive proactive tasks marked with [Proactive Task: name]. Treat these as user requests and execute them.`;
+${toolList || '(none)'}`;
   }
 
   // Getters for external access

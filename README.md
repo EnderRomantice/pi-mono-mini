@@ -46,22 +46,25 @@ npm start
 ## Architecture
 
 ```
-Phase 1: Core ReAct Loop ✅
-  src/
+Phase 1: Core ✅
+  src/core/
   ├── types.ts          # Core types
-  ├── llm.ts            # LLM client (Kimi Code / OpenAI compatible)
+  ├── llm.ts            # LLM client (OpenAI-compatible)
   ├── agent.ts          # ReAct Agent
-  ├── tools/
-  │   └── calculator.ts # Example tool
-  └── main.ts           # Entry point
+  └── index.ts          # Core exports
 
-Phase 2: Proactive Agent ✅
+Phase 2: Chat Interface ✅
+  src/chat/
+  ├── cli.ts            # Interactive CLI
+  ├── session.ts        # Chat session management
+  └── index.ts          # Chat exports
+
+Phase 3: Proactive Agent ✅
   src/proactive/
   ├── index.ts          # ProactiveAgent wrapper
   ├── scheduler.ts      # Task scheduler (cron/at)
   ├── watcher.ts        # File watcher for pending tasks
   └── types.ts          # Task types
-  demo-proactive.ts     # Demo script
 ```
 
 ### ReAct Loop
@@ -87,31 +90,34 @@ User Input → LLM Reasoning → Tool Call? → Execute Tool → (Loop)
 
 **Priority**: `KIMI_CODE_API_KEY` > `OPENAI_API_KEY`
 
-## Adding Tools
+## Usage
 
-```typescript
-// src/tools/my-tool.ts
-import type { Tool } from '../types.js';
+### Interactive Chat
 
-export const myTool: Tool = {
-  name: 'my_tool',
-  description: 'What this tool does',
-  parameters: {
-    type: 'object',
-    properties: {
-      arg1: { type: 'string', description: 'Description' }
-    },
-    required: ['arg1']
-  },
-  execute: async (args: { arg1: string }) => {
-    return 'Result';
-  }
-};
+```bash
+npm start
 ```
 
-Register in `main.ts`:
+Commands available in chat:
+- `/help` - Show available commands
+- `/clear` - Clear conversation history
+- `/history` - Show conversation history
+- `/export` - Export conversation as markdown
+- `/quit` - Exit the chat
+
+### Using as a Library
+
 ```typescript
-const agent = new Agent(config, [calculatorTool, myTool]);
+import { Agent, getLLMConfigFromEnv } from './core/index.js';
+
+const llmConfig = getLLMConfigFromEnv();
+const agent = new Agent({
+  systemPrompt: 'You are a helpful assistant.',
+  llm: llmConfig,
+}, []);
+
+const response = await agent.run('Hello!');
+console.log(response);
 ```
 
 ## Proactive Agent
@@ -208,11 +214,11 @@ Proactive task data is stored by default in the `.pi/proactive/` directory:
 
 ## Roadmap
 
-- [x] Phase 1: Core ReAct Loop
-- [x] Phase 2: Proactive Agent
-- [ ] Phase 3: Streaming responses
-- [ ] Phase 4: Filesystem and bash tools
-- [ ] Phase 5: Interactive TUI
+- [x] Phase 1: Core (ReAct Agent + Tool Calling)
+- [x] Phase 2: Chat Interface (Interactive CLI)
+- [x] Phase 3: Proactive Agent (Scheduled tasks)
+- [ ] Phase 4: Streaming responses
+- [ ] Phase 5: Filesystem and bash tools
 
 ## References
 

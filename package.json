@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "main": "dist/main.js",
+  "bin": {
+    "pi-mono": "./dist/main.js"
+  },
   "scripts": {
     "start": "tsx src/main.ts",
+    "chat": "tsx src/main.ts",
     "proactive": "tsx src/demo-proactive.ts",
     "build": "tsc",
     "dev": "tsx --watch src/main.ts"

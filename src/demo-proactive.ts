@@ -8,10 +8,8 @@
  */
 
 import 'dotenv/config';
-import { Agent } from './agent.js';
+import { Agent, getLLMConfigFromEnv } from './core/index.js';
 import { ProactiveAgent } from './proactive/index.js';
-import { calculatorTool } from './tools/calculator.js';
-import { getLLMConfigFromEnv } from './llm.js';
 
 async function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
@@ -28,11 +26,11 @@ async function main() {
   // Create base agent
   const agent = new Agent(
     {
-      systemPrompt: 'You are a helpful assistant with calculation abilities.',
+      systemPrompt: 'You are a helpful assistant.',
       llm: llmConfig,
       maxIterations: 5,
     },
-    [calculatorTool]
+    []
   );
 
   // Wrap with proactive capabilities
@@ -54,7 +52,7 @@ async function main() {
       at: new Date(Date.now() + 5000).toISOString(), // 5 seconds from now
     },
     action: {
-      prompt: 'Calculate 2 + 3, then multiply the result by 10. Tell me what you are doing.',
+      prompt: 'Tell me a short joke.',
     },
     enabled: true,
   });
@@ -63,7 +61,7 @@ async function main() {
   console.log('👤 User starts interaction:');
   console.log('----------------------------');
   
-  const result1 = await agent.run('What is 10 + 5?');
+  const result1 = await agent.run('Hello! Who are you?');
   console.log('\n🤖 Agent:', result1);
 
   console.log('\n⏳ Waiting for proactive task to trigger...\n');
