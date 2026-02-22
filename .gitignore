@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+
+# Build output
+dist/
+build/
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# Runtime data
+.pi/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
