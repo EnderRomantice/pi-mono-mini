@@ -116,47 +116,47 @@ const agent = new Agent(config, [calculatorTool, myTool]);
 
 ## Proactive Agent
 
-Proactive Agent 扩展让 Agent 具备了**主动触发**的能力，可以在指定时间自动执行任务，而无需等待用户输入。
+The Proactive Agent extension enables the Agent with **proactive triggering** capabilities, allowing tasks to be executed automatically at specified times without waiting for user input.
 
-### 核心概念
+### Core Concepts
 
 ```
 ┌─────────────┐     ┌──────────┐     ┌──────────┐     ┌─────────────┐
 │  Scheduler  │────▶│  Pending │────▶│  Watcher │────▶│   Agent     │
-│  (调度器)    │     │ Directory│     │(文件监听)  │     │ (steer())   │
+│  (scheduler)│     │ Directory│     │(file watch)│    │ (steer())   │
 └─────────────┘     └──────────┘     └──────────┘     └─────────────┘
 ```
 
-- **Scheduler**: 定时检查任务，到期时写入 `pending` 目录
-- **PendingWatcher**: 监听文件变化，调用 `agent.steer()` 注入任务
-- **Agent**: 像处理普通用户消息一样处理 proactive 任务
+- **Scheduler**: Periodically checks tasks and writes to the `pending` directory when due
+- **PendingWatcher**: Listens for file changes and injects tasks via `agent.steer()`
+- **Agent**: Handles proactive tasks just like regular user messages
 
-### 任务类型
+### Task Types
 
-| 类型 | 触发方式 | 示例 |
-|------|---------|------|
-| `scheduled` | 指定时间触发 | `at: "2025-01-01T00:00:00Z"` |
-| `recurring` | Cron 表达式周期触发 | `cron: "*/5 * * * *"` (每5分钟) |
-| `event` | 事件触发 | 文件变化、git 提交等 |
+| Type | Trigger | Example |
+|------|---------|---------|
+| `scheduled` | Trigger at specified time | `at: "2025-01-01T00:00:00Z"` |
+| `recurring` | Cron expression (periodic) | `cron: "*/5 * * * *"` (every 5 minutes) |
+| `event` | Event-driven | File changes, git commits, etc. |
 
-### 使用方法
+### Usage
 
 ```typescript
 import { Agent } from './agent.js';
 import { ProactiveAgent } from './proactive/index.js';
 
-// 创建基础 Agent
+// Create base Agent
 const agent = new Agent(config, tools);
 
-// 包装为 Proactive Agent
+// Wrap with Proactive capabilities
 const proactive = new ProactiveAgent(agent, {
-  dataDir: '.pi/proactive',  // 任务数据目录
-  autoStart: true,           // 自动启动
+  dataDir: '.pi/proactive',  // Task data directory
+  autoStart: true,           // Auto-start
 });
 
 await proactive.init();
 
-// 调度一个 5 秒后触发的任务
+// Schedule a task to trigger in 5 seconds
 await proactive.schedule({
   type: 'scheduled',
   name: 'periodic-check',
@@ -169,12 +169,12 @@ await proactive.schedule({
   enabled: true,
 });
 
-// 调度周期性任务 (Cron 格式)
+// Schedule a recurring task (Cron format)
 await proactive.schedule({
   type: 'recurring',
   name: 'hourly-report',
   trigger: {
-    cron: '0 * * * *',  // 每小时执行
+    cron: '0 * * * *',  // Run every hour
   },
   action: {
     prompt: 'Generate a summary of recent activities.',
@@ -182,28 +182,28 @@ await proactive.schedule({
   enabled: true,
 });
 
-// 查看所有任务
+// List all tasks
 const tasks = proactive.listTasks();
 
-// 停止 proactive 系统
+// Stop the proactive system
 proactive.stop();
 ```
 
-### 运行 Demo
+### Run Demo
 
 ```bash
 npm run proactive
 ```
 
-### 数据存储
+### Data Storage
 
-Proactive 任务数据默认存储在 `.pi/proactive/` 目录：
+Proactive task data is stored by default in the `.pi/proactive/` directory:
 
 ```
 .pi/proactive/
-├── tasks/      # 任务定义 (JSON)
-├── pending/    # 待执行的任务
-└── results/    # 执行结果记录
+├── tasks/      # Task definitions (JSON)
+├── pending/    # Pending tasks to be executed
+└── results/    # Execution result logs
 ```
 
 ## Roadmap
