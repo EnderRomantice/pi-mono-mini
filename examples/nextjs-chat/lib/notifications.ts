@@ -42,10 +42,11 @@ export function showNotification(title: string, body: string, options?: Notifica
 }
 
 export function isNotificationSupported(): boolean {
-  return 'Notification' in window;
+  return typeof window !== 'undefined' && 'Notification' in window;
 }
 
 export function getNotificationPermission(): NotificationPermission | 'unsupported' {
+  if (typeof window === 'undefined') return 'unsupported';
   if (!('Notification' in window)) return 'unsupported';
   return Notification.permission;
 }

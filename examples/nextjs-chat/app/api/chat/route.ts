@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initChatManager, getManager } from '../../../lib/chat.js';
+import { initChatManager, getManager } from '@/lib/chat.js';
 
 // Initialize on first request
 let initialized = false;

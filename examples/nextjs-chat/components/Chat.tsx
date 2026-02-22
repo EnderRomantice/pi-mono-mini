@@ -6,7 +6,7 @@ import {
   showNotification,
   isNotificationSupported,
   getNotificationPermission 
-} from '../lib/notifications';
+} from '@/lib/notifications';
 
 interface Message {
   id: string;
