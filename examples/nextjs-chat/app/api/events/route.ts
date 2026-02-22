@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { initChatManager, addClient } from '@/lib/chat.js';
+import { initChatManager, addClient } from '@/lib/chat';
 
 let initialized = false;
 async function ensureInitialized() {
